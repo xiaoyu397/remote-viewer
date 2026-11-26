@@ -1,0 +1,1 @@
+{"name":"remote-gs-viewer","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server.mjs","build":"vite build"},"dependencies":{"@sparkjsdev/spark":"2.4.0","three":"0.180.0","express":"5.1.0"},"devDependencies":{"vite":"6.4.1"}}
