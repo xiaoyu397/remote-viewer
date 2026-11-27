@@ -10,7 +10,19 @@
   <header class="app-header">
     <button id="toggle-files" class="icon-button" aria-label="切换文件目录" title="切换文件目录" aria-controls="sidebar" aria-expanded="true"><span class="icon sidebar-icon"></span></button>
     <span class="icon repo-icon"></span><strong>Remote Viewer</strong>
+    <button id="check-update">检查更新</button>
   </header>
+  <dialog id="update-dialog" aria-labelledby="update-title">
+    <h2 id="update-title">软件更新</h2>
+    <p id="update-version"></p>
+    <p id="update-message" role="status"></p>
+    <div class="update-actions">
+      <a href="https://github.com/xiaoyu397/remote-viewer/releases/latest" target="_blank" rel="noreferrer">发布说明</a>
+      <button id="apply-update" hidden>更新并重启</button>
+      <button id="reload-update" hidden>刷新页面</button>
+      <form method="dialog"><button>关闭</button></form>
+    </div>
+  </dialog>
   <div id="workspace">
     <aside id="sidebar" aria-label="文件目录">
       <div class="sidebar-heading">

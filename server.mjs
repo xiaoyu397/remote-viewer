@@ -1,5 +1,6 @@
 import {installCheckpoints} from './checkpoint.mjs';
 import {installGpu} from './gpu-server.mjs';
+import {installUpdates} from './update.mjs';
 import {installVideo} from './transcode.mjs';
 import express from 'express';
 import fs from 'node:fs/promises';
@@ -33,6 +34,7 @@ models.get('/model/*parts',async(req,res)=>{try{const p=await resolve(req.params
 app.use(models);
 installGpu(app,{enabled:o['server-gpu'],root,resolve,models,dist:path.join(base,'dist')});
 installCheckpoints(app,resolve,root);
+await installUpdates(app,{base,host:o.host});
 await installVideo(app,resolve,root);
 app.use(express.static(path.join(base,'dist')));
-app.listen(Number(o.port),o.host,()=>console.log(`GS Viewer: http://${o.host}:${o.port}\nModels: ${root}`));
+app.listen(Number(o.port),o.host,()=>{process.send?.({type:'ready'}); console.log(`GS Viewer: http://${o.host}:${o.port}\nModels: ${root}`);});

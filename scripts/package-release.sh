@@ -12,7 +12,9 @@ mkdir -p "$bundle"
 npm ci --no-audit --no-fund
 npm run build
 cp -R dist "$bundle/"
-cp server.mjs gpu-server.mjs checkpoint.mjs transcode.mjs inspect_checkpoint.py \
+cp scripts/portable-launcher.mjs "$bundle/server.mjs"
+cp server.mjs "$bundle/service.mjs"
+cp update.mjs gpu-server.mjs checkpoint.mjs transcode.mjs inspect_checkpoint.py \
   README.md package.json package-lock.json "$bundle/"
 npm ci --prefix "$bundle" --omit=dev --ignore-scripts --no-audit --no-fund
 git rev-parse HEAD > "$bundle/REVISION"

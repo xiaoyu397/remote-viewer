@@ -38,6 +38,8 @@ jobs:
           test "$(curl -fsS http://127.0.0.1:18273/model/ready.txt)" = ready
           curl -fsS http://127.0.0.1:18273/model.html -o model.html
           curl -fsS http://127.0.0.1:18273/pano.html -o pano.html
+      - name: Test in-app upgrade and rollback
+        run: RV_TEST_BUNDLE="$RUNNER_TEMP/remote-viewer" node --test tests/portable-update.test.mjs
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

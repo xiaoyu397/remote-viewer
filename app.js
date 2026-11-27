@@ -1,3 +1,4 @@
+import './update-ui.js';
 import {showModel, closeModel, setModelsVisible} from './models.js';
 import { showCheckpoint } from './checkpoint-view.js';
 import { createFileTree } from './file-tree.js';
