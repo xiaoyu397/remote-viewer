@@ -1,3 +1,4 @@
+import { showCheckpoint } from './checkpoint-view.js';
 import { createFileTree } from './file-tree.js';
 import { setupSidebar } from './sidebar.js';
 setupSidebar();
@@ -11,9 +12,15 @@ const selectFile = createFileTree({
   openFile: open, fileIcon: name => gs.test(name) ? 'model' : img.test(name) ? 'image' : video.test(name) ? 'video' : 'file'
 });
 function drawTabs(){$('tabs').replaceChildren();for(const e of tabs){const b=document.createElement('button');b.className=active?.path===e.path?'active':'';b.textContent=e.name+'  ';b.onclick=()=>open(e);const x=document.createElement('span');x.textContent='×';x.title='关闭';x.style.padding='4px';x.onclick=ev=>{ev.stopPropagation();tabs=tabs.filter(t=>t.path!==e.path);if(active?.path===e.path){if(tabs.length)open(tabs.at(-1));else reset();}drawTabs();};b.append(x);$('tabs').append(b);}}
-function reset(){generation++;active=null;hideMarkdownControl();gsModule?.clearKeys();$('gsbar').hidden=$('view').hidden=$('posebar').hidden=true;$('preview').hidden=false;$('preview').textContent='从左侧目录选择文件';$('filename').textContent='文件预览';$('pano').hidden=$('download').hidden=true;status('就绪');selectFile(null);}
-async function open(e,pano=false){const id=++generation;hideMarkdownControl();active=e;if(!tabs.some(t=>t.path===e.path))tabs.push(e);drawTabs();selectFile(e.path);gsModule?.clearKeys();$('filename').textContent=e.path;$('download').hidden=false;$('pano').hidden=!img.test(e.name);$('pano').textContent=pano?'普通图片':'360° 全景';$('pano').onclick=()=>open(e,!pano);$('download').onclick=()=>{const a=document.createElement('a');a.href=url(e);a.download=e.name;a.click();};const isGS=gs.test(e.name);$('gsbar').hidden=$('view').hidden=$('posebar').hidden=!isGS;const p=$('preview');p.hidden=isGS;p.replaceChildren();status(e.name);
+let checkpointRequest;
+function reset(){checkpointRequest?.abort();generation++;active=null;hideMarkdownControl();gsModule?.clearKeys();$('gsbar').hidden=$('view').hidden=$('posebar').hidden=true;$('preview').hidden=false;$('preview').textContent='从左侧目录选择文件';$('filename').textContent='文件预览';$('pano').hidden=$('download').hidden=true;status('就绪');selectFile(null);}
+async function open(e,pano=false){checkpointRequest?.abort();const id=++generation;hideMarkdownControl();active=e;if(!tabs.some(t=>t.path===e.path))tabs.push(e);drawTabs();selectFile(e.path);gsModule?.clearKeys();$('filename').textContent=e.path;$('download').hidden=false;$('pano').hidden=!img.test(e.name);$('pano').textContent=pano?'普通图片':'360° 全景';$('pano').onclick=()=>open(e,!pano);$('download').onclick=()=>{const a=document.createElement('a');a.href=url(e);a.download=e.name;a.click();};const isGS=gs.test(e.name);$('gsbar').hidden=$('view').hidden=$('posebar').hidden=!isGS;const p=$('preview');p.hidden=isGS;p.replaceChildren();status(e.name);
 try{
+  if (/\.(pt|pth)$/i.test(e.name)) {
+    checkpointRequest = new AbortController();
+    await showCheckpoint(e, p, checkpointRequest.signal);
+    return;
+  }
   const isText = markdown.test(e.name) || text.test(e.name) || !e.name.includes('.');
   const showSize = () => status(e.name+' · '+(e.size/1048576).toFixed(2)+' MB');
   if (e.size != null) showSize();

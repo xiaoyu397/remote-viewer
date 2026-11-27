@@ -28,6 +28,7 @@
 | Panoramas | 浏览器可解码的图片 | 推荐 2:1 等距柱状投影 |
 | Video | MP4, WebM, OGV, MOV, M4V, MKV, AVI | 原生播放或 FFmpeg 兼容转码 |
 | Audio | MP3, WAV, OGG, FLAC, M4A | 依赖浏览器解码能力 |
+| PyTorch 检查点 | PT, PTH | 张量、state_dict 或嵌套训练检查点；按名称筛选张量，查看形状、类型和元素数 |
 | Text | TXT, JSON, JSONL, CSV, LOG, Markdown, Python, JavaScript, YAML, XML, Shell, C/C++ 等 | UTF-8，默认预览前 2 MiB |
 
 ## Quick Start
@@ -37,6 +38,16 @@
 - Node.js 22 或更高版本（推荐），以及 npm。
 - 支持 WebGL2 的现代浏览器，建议启用硬件加速。
 - FFmpeg（可选，用于兼容视频播放），需要包含 libx264 和 AAC 编码器。
+
+### 检查点参数预览
+
+服务器上的 `python3` 需要安装 PyTorch 2.6 或更高版本（CPU 版即可）。若训练环境已有 PyTorch，可在启动 Remote Viewer 时指定其解释器：
+
+```bash
+CHECKPOINT_PYTHON=/path/to/venv/bin/python npm start -- --root /data
+```
+
+点击 `.pt` 或 `.pth` 即可查看张量表。嵌套检查点使用完整路径显示模型权重、缓冲区和优化器张量。预览使用 `weights_only=True` 和 `FakeTensorMode`，浏览器仅接收元数据。每个文件最多列出前 10,000 个张量。包含自定义 Python 对象的检查点可能需要先导出模型的 `state_dict`。
 
 ### Installation
 
