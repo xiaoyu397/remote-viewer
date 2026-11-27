@@ -120,3 +120,13 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 #update-message { overflow-wrap: anywhere; }
 .update-actions { display: flex; align-items: center; gap: 8px; }
 .update-actions a { color: var(--accent); margin-right: auto; }
+
+.model-layout { display: inline-flex; align-items: center; gap: 0; padding: 2px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); }
+.model-layout button { min-width: 58px; padding: 4px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 12px; }
+.model-layout button[aria-pressed="true"] { background: var(--selected); color: var(--accent); font-weight: 650; }
+#view.single-layout { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); overflow: hidden; }
+#view.single-layout .model-tile { min-height: 0; }
+@media (max-width: 600px) {
+  .model-layout { margin-inline-start: auto; }
+  .model-layout button { min-width: 48px; padding-inline: 7px; }
+}
