@@ -2,7 +2,7 @@ import { createFileTree } from './file-tree.js';
 import { setupSidebar } from './sidebar.js';
 setupSidebar();
 const $=id=>document.getElementById(id), status=s=>$('status').textContent=s;
-const gs=/\.(ply|splat|ksplat|spz|sog)$/i, img=/\.(jpg|jpeg|jfif|png|webp|bmp|gif|avif|ico|tiff?|heic|heif)$/i, video=/\.(mp4|webm|ogv|mov|m4v|mkv|avi)$/i, audio=/\.(mp3|wav|ogg|flac|m4a)$/i, text=/\.(txt|json|jsonl|csv|tsv|log|py|js|ts|jsx|tsx|html|css|xml|yaml|yml|toml|ini|cfg|conf|sh|bash|cpp|c|h|hpp|rs|go|java|sql|obj|mtl|ipynb)$/i;
+const gs=/\.(ply|splat|ksplat|spz|sog)$/i, img=/\.(jpg|jpeg|jfif|png|webp|bmp|gif|avif|ico|svg|tiff?|heic|heif)$/i, video=/\.(mp4|webm|ogv|mov|m4v|mkv|avi)$/i, audio=/\.(mp3|wav|ogg|flac|m4a)$/i, text=/\.(txt|json|jsonl|csv|tsv|log|py|js|ts|jsx|tsx|html|css|xml|yaml|yml|toml|ini|cfg|conf|sh|bash|cpp|c|h|hpp|rs|go|java|sql|obj|mtl|ipynb)$/i;
 const markdown=/\.(?:md|markdown)$/i;
 const url=e=>'/model/'+e.path.split('/').map(encodeURIComponent).join('/');
 let tabs=[], active=null, generation=0, gsModule, gsQueue=Promise.resolve();

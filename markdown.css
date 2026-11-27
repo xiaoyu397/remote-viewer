@@ -9,3 +9,5 @@
   padding: clamp(16px, 4%, 40px);
   overflow-wrap: anywhere;
 }
+
+.markdown-body video { max-width: 100%; height: auto; }

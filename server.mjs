@@ -27,7 +27,7 @@ app.get('/api/list',async(req,res)=>{
     res.json({path:relative,items});
   } catch(e) { res.status(400).json({error:e.message}); }
 });
-app.get('/model/*parts',async(req,res)=>{try{const p=await resolve(req.params.parts.join('/'));if(path.relative(root,p).split(path.sep).some(x=>x.startsWith('.')))return res.sendStatus(403);const file=await fs.stat(p);if(!file.isFile())return res.sendStatus(403);res.set('X-Content-Type-Options','nosniff');res.set('Content-Security-Policy',"sandbox; default-src 'none'");if(!/\.(jpg|jpeg|jfif|png|webp|bmp|gif|avif|ico|mp4|webm|ogv|mov|m4v|mkv|avi|mp3|wav|ogg|flac)$/i.test(p))res.type('application/octet-stream');res.sendFile(p,{dotfiles:'deny',acceptRanges:file.size>0});}catch{res.sendStatus(404);}});
+app.get('/model/*parts',async(req,res)=>{try{const p=await resolve(req.params.parts.join('/'));if(path.relative(root,p).split(path.sep).some(x=>x.startsWith('.')))return res.sendStatus(403);const file=await fs.stat(p);if(!file.isFile())return res.sendStatus(403);res.set('X-Content-Type-Options','nosniff');res.set('Content-Security-Policy',"sandbox; default-src 'none'");if(!/\.(jpg|jpeg|jfif|png|webp|bmp|gif|avif|ico|svg|mp4|webm|ogv|mov|m4v|mkv|avi|mp3|wav|ogg|flac)$/i.test(p))res.type('application/octet-stream');res.sendFile(p,{dotfiles:'deny',acceptRanges:file.size>0});}catch{res.sendStatus(404);}});
 await installVideo(app,resolve,root);
 app.use(express.static(path.join(base,'dist')));
 app.listen(Number(o.port),o.host,()=>console.log(`GS Viewer: http://${o.host}:${o.port}\nModels: ${root}`));
