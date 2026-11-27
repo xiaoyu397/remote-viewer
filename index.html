@@ -39,6 +39,10 @@
       <section class="viewer-frame" aria-labelledby="filename">
         <div id="filebar">
           <span class="icon file-icon"></span><strong id="filename">文件预览</strong>
+          <div id="model-layout" class="model-layout" role="group" aria-label="3DGS 窗口布局" hidden>
+            <button id="layout-single" type="button" aria-pressed="false" title="只显示当前选中的模型">单窗口</button>
+            <button id="layout-grid" type="button" aria-pressed="true" title="并排显示所有已打开的模型">并排</button>
+          </div>
           <label id="markdown-control" hidden><input id="markdown-render" type="checkbox" autocomplete="off"> 渲染 Markdown</label>
           <button id="pano" hidden>360° 全景</button><button id="download" hidden>下载</button>
         </div>
