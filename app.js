@@ -1,3 +1,4 @@
+import {showModel, closeModel, setModelsVisible} from './models.js';
 import { showCheckpoint } from './checkpoint-view.js';
 import { createFileTree } from './file-tree.js';
 import { setupSidebar } from './sidebar.js';
@@ -6,15 +7,15 @@ const $=id=>document.getElementById(id), status=s=>$('status').textContent=s;
 const gs=/\.(ply|splat|ksplat|spz|sog)$/i, img=/\.(jpg|jpeg|jfif|png|webp|bmp|gif|avif|ico|svg|tiff?|heic|heif)$/i, video=/\.(mp4|webm|ogv|mov|m4v|mkv|avi)$/i, audio=/\.(mp3|wav|ogg|flac|m4a)$/i, text=/\.(txt|json|jsonl|csv|tsv|log|py|js|ts|jsx|tsx|html|css|xml|yaml|yml|toml|ini|cfg|conf|sh|bash|cpp|c|h|hpp|rs|go|java|sql|obj|mtl|ipynb)$/i;
 const markdown=/\.(?:md|markdown)$/i;
 const url=e=>'/model/'+e.path.split('/').map(encodeURIComponent).join('/');
-let tabs=[], active=null, generation=0, gsModule, gsQueue=Promise.resolve();
+let tabs=[], active=null, generation=0;
 const selectFile = createFileTree({
   root: $('files'), search: $('search'), refresh: $('refresh'), collapse: $('collapse'),
   openFile: open, fileIcon: name => gs.test(name) ? 'model' : img.test(name) ? 'image' : video.test(name) ? 'video' : 'file'
 });
-function drawTabs(){$('tabs').replaceChildren();for(const e of tabs){const b=document.createElement('button');b.className=active?.path===e.path?'active':'';b.textContent=e.name+'  ';b.onclick=()=>open(e);const x=document.createElement('span');x.textContent='×';x.title='关闭';x.style.padding='4px';x.onclick=ev=>{ev.stopPropagation();tabs=tabs.filter(t=>t.path!==e.path);if(active?.path===e.path){if(tabs.length)open(tabs.at(-1));else reset();}drawTabs();};b.append(x);$('tabs').append(b);}}
+function drawTabs(){$('tabs').replaceChildren();for(const e of tabs){const b=document.createElement('button');b.className=active?.path===e.path?'active':'';b.textContent=e.name+'  ';b.onclick=()=>open(e);const x=document.createElement('span');x.textContent='×';x.title='关闭';x.style.padding='4px';x.onclick=ev=>{ev.stopPropagation();closeModel(e.path);tabs=tabs.filter(t=>t.path!==e.path);if(active?.path===e.path){if(tabs.length)open((gs.test(e.name) && tabs.findLast(t=>gs.test(t.name))) || tabs.at(-1));else reset();}drawTabs();};b.append(x);$('tabs').append(b);}}
 let checkpointRequest;
-function reset(){checkpointRequest?.abort();generation++;active=null;hideMarkdownControl();gsModule?.clearKeys();$('gsbar').hidden=$('view').hidden=$('posebar').hidden=true;$('preview').hidden=false;$('preview').textContent='从左侧目录选择文件';$('filename').textContent='文件预览';$('pano').hidden=$('download').hidden=true;status('就绪');selectFile(null);}
-async function open(e,pano=false){checkpointRequest?.abort();const id=++generation;hideMarkdownControl();active=e;if(!tabs.some(t=>t.path===e.path))tabs.push(e);drawTabs();selectFile(e.path);gsModule?.clearKeys();$('filename').textContent=e.path;$('download').hidden=false;$('pano').hidden=!img.test(e.name);$('pano').textContent=pano?'普通图片':'360° 全景';$('pano').onclick=()=>open(e,!pano);$('download').onclick=()=>{const a=document.createElement('a');a.href=url(e);a.download=e.name;a.click();};const isGS=gs.test(e.name);$('gsbar').hidden=$('view').hidden=$('posebar').hidden=!isGS;const p=$('preview');p.hidden=isGS;p.replaceChildren();status(e.name);
+function reset(){checkpointRequest?.abort();generation++;active=null;hideMarkdownControl();setModelsVisible(false);$('view').hidden=true;$('preview').hidden=false;$('preview').textContent='从左侧目录选择文件';$('filename').textContent='文件预览';$('pano').hidden=$('download').hidden=true;status('就绪');selectFile(null);}
+async function open(e,pano=false){checkpointRequest?.abort();const id=++generation;hideMarkdownControl();active=e;if(!tabs.some(t=>t.path===e.path))tabs.push(e);drawTabs();selectFile(e.path);if(!gs.test(e.name))setModelsVisible(false);$('filename').textContent=e.path;$('download').hidden=false;$('pano').hidden=!img.test(e.name);$('pano').textContent=pano?'普通图片':'360° 全景';$('pano').onclick=()=>open(e,!pano);$('download').onclick=()=>{const a=document.createElement('a');a.href=url(e);a.download=e.name;a.click();};const isGS=gs.test(e.name);$('view').hidden=!isGS;const p=$('preview');p.hidden=isGS;p.replaceChildren();status(e.name);
 try{
   if (/\.(pt|pth)$/i.test(e.name)) {
     checkpointRequest = new AbortController();
@@ -24,7 +25,7 @@ try{
   const isText = markdown.test(e.name) || text.test(e.name) || !e.name.includes('.');
   const showSize = () => status(e.name+' · '+(e.size/1048576).toFixed(2)+' MB');
   if (e.size != null) showSize();
-  else if (!isText) {
+  else if (!isText && !isGS) {
     // Media previews can start while their size is being fetched.
     fetch(url(e), {method:'HEAD'}).then(info => {
       const length = info.headers.get('Content-Length');
@@ -34,7 +35,7 @@ try{
       }
     }).catch(() => {});
   }
-if(isGS){gsQueue=gsQueue.catch(()=>{}).then(async()=>{if(id!==generation)return;gsModule=await import('./src.js');if(id===generation)await gsModule.load(e);});await gsQueue;return;}if(pano){const f=document.createElement('iframe');f.allowFullscreen=true;f.onload=()=>f.contentWindow.postMessage({type:'pano',url:url(e),name:e.name},location.origin);f.src='/pano.html';p.append(f);return;}if(video.test(e.name)){showVideo(e,p,id);return;}if(img.test(e.name)||audio.test(e.name)){const el=document.createElement(img.test(e.name)?'img':video.test(e.name)?'video':'audio');el.controls=true;el.preload='metadata';el.onerror=()=>{if(id===generation)status('浏览器无法解码该格式或文件已损坏，可下载后转换格式');};el.src=url(e);p.append(el);if(img.test(e.name))el.onload=()=>{if(id===generation){status(`${e.name} · ${el.naturalWidth} × ${el.naturalHeight}`);if(Math.abs(el.naturalWidth/el.naturalHeight-2)<.04)$('pano').textContent='360° 全景（推荐）';}};return;}if(isText){
+if(isGS){showModel(e,open);return;}if(pano){const f=document.createElement('iframe');f.allowFullscreen=true;f.onload=()=>f.contentWindow.postMessage({type:'pano',url:url(e),name:e.name},location.origin);f.src='/pano.html';p.append(f);return;}if(video.test(e.name)){showVideo(e,p,id);return;}if(img.test(e.name)||audio.test(e.name)){const el=document.createElement(img.test(e.name)?'img':video.test(e.name)?'video':'audio');el.controls=true;el.preload='metadata';el.onerror=()=>{if(id===generation)status('浏览器无法解码该格式或文件已损坏，可下载后转换格式');};el.src=url(e);p.append(el);if(img.test(e.name))el.onload=()=>{if(id===generation){status(`${e.name} · ${el.naturalWidth} × ${el.naturalHeight}`);if(Math.abs(el.naturalWidth/el.naturalHeight-2)<.04)$('pano').textContent='360° 全景（推荐）';}};return;}if(isText){
   const r=await fetch(url(e),{headers:{Range:'bytes=0-2097151'}});
   if(!r.ok)throw Error('HTTP '+r.status);
   const data=await r.text();

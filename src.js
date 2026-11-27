@@ -1,28 +1,58 @@
-import * as THREE from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {SparkRenderer,SplatMesh} from '@sparkjsdev/spark';
-const $=id=>document.getElementById(id), status=s=>$('status').textContent=s;
-let model=null,busy=false,flipped=false;
-const gsExt=/\.(ply|splat|ksplat|spz|sog)$/i;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x11151c);const camera=new THREE.PerspectiveCamera(90,1,.001,10000);camera.position.set(0,0,0);
-let renderer;try{renderer=new THREE.WebGLRenderer({antialias:false});}catch(e){status('WebGL2 初始化失败，请开启浏览器硬件加速');throw e;}
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));$('view').append(renderer.domElement);scene.add(new SparkRenderer({renderer}));const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enabled=false;
-let mode='fps', yaw=0,pitch=0, drag=null;const keys=new Set(), canvas=renderer.domElement;
-const orientation=new THREE.Euler(0,0,0,'YXZ'), move=new THREE.Vector3(), forward=new THREE.Vector3(), right=new THREE.Vector3();
-function setFov(v){camera.fov=Math.max(20,Math.min(120,v));$('fov').value=camera.fov;$('angle').textContent=Math.round(camera.fov)+'°';camera.updateProjectionMatrix();}
-function origin(){mode='fps';controls.enabled=false;keys.clear();yaw=pitch=0;camera.position.set(0,0,0);camera.quaternion.identity();setFov(90);$('mode').textContent='第一人称';}
-canvas.addEventListener('pointerdown',e=>{if(mode!=='fps'||e.button!==0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);canvas.focus();});canvas.tabIndex=0;
-canvas.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId||mode!=='fps')return;yaw-=(e.clientX-drag.x)*.003;pitch=THREE.MathUtils.clamp(pitch-(e.clientY-drag.y)*.003,-Math.PI/2+.001,Math.PI/2-.001);drag.x=e.clientX;drag.y=e.clientY;camera.quaternion.setFromEuler(orientation.set(pitch,yaw,0));});
-for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,()=>drag=null);
-canvas.addEventListener('wheel',e=>{if(mode!=='fps')return;e.preventDefault();setFov(camera.fov+Math.sign(e.deltaY)*3);},{passive:false});
-const movement=new Set(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight']);
-window.addEventListener('keydown',e=>{if(!$('gsbar').hidden && mode==='fps'){}else return;if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target?.tagName)||e.target?.isContentEditable||!movement.has(e.code))return;keys.add(e.code);e.preventDefault();});
-window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>keys.clear());document.addEventListener('focusin',e=>{if(e.target!==canvas)keys.clear();});
-let last=performance.now();function tick(){const now=performance.now(),dt=Math.min((now-last)/1000,.05);last=now;if(mode==='fps'){forward.set(0,0,-1).applyQuaternion(camera.quaternion);right.set(1,0,0).applyQuaternion(camera.quaternion);move.set(0,0,0).addScaledVector(forward,Number(keys.has('KeyW'))-Number(keys.has('KeyS'))).addScaledVector(right,Number(keys.has('KeyD'))-Number(keys.has('KeyA')));move.y+=Number(keys.has('KeyE'))-Number(keys.has('KeyQ'));if(move.lengthSq())camera.position.addScaledVector(move.normalize(),dt*Number($('speed').value)*(keys.has('ShiftLeft')||keys.has('ShiftRight')?4:1));}else controls.update();$('pose').textContent=camera.position.toArray().map(n=>n.toFixed(3)).join(', ');}
-$('speed').oninput=()=>$('speedval').textContent=Number($('speed').value).toFixed(1);$('fps').onclick=()=>{if(mode==='fps')return;mode='fps';controls.enabled=false;orientation.setFromQuaternion(camera.quaternion,'YXZ');pitch=orientation.x;yaw=orientation.y;$('mode').textContent='第一人称';canvas.focus();};origin();
-function resize(){const w=$('view').clientWidth,h=$('view').clientHeight;if(w&&h){renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}}new ResizeObserver(resize).observe($('view'));resize();renderer.setAnimationLoop(()=>{if(!$('gsbar').hidden){tick();renderer.render(scene,camera);}});
-function frame(){if(!model)return;model.updateMatrixWorld(true);const box=model.getBoundingBox().applyMatrix4(model.matrixWorld);const center=box.getCenter(new THREE.Vector3()),radius=Math.max(box.getSize(new THREE.Vector3()).length()/2,.01);if(!Number.isFinite(radius)||!Number.isFinite(center.length()))return;const half=Math.min(camera.fov*Math.PI/360,Math.atan(Math.tan(camera.fov*Math.PI/360)*camera.aspect));const d=radius/Math.sin(half)*1.1;mode='orbit';keys.clear();controls.enabled=true;$('mode').textContent='全局环绕';controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(0,0,d));camera.near=Math.max(radius/10000,.00001);camera.far=Math.max(d+radius*100,100);camera.updateProjectionMatrix();controls.update();}
-export async function load(e){if(busy)return status('正在加载，请稍候');busy=true;let next;try{status('加载 '+e.name+' …');next=new SplatMesh({url:'/model/'+e.path.split('/').map(encodeURIComponent).join('/'),onProgress:p=>status('加载 '+e.name+' '+(p.total?Math.round(p.loaded/p.total*100)+'%':Math.round(p.loaded/1048576)+' MB'))});await next.initialized;next.rotation.x=flipped?Math.PI:0;scene.add(next);if(model){scene.remove(model);model.dispose();}model=next;next=null;camera.near=.001;camera.far=10000;origin();if(!$('gsbar').hidden)canvas.focus();status(e.name+' · '+model.numSplats.toLocaleString()+' Gaussians');}catch(err){next?.dispose();status('加载失败：'+err.message);}finally{busy=false;}}
-$('reset').onclick=()=>{origin();canvas.focus();};$('global').onclick=()=>{frame();canvas.focus();};$('flip').onclick=()=>{flipped=!flipped;if(model){model.rotation.x=flipped?Math.PI:0;if(mode==='orbit')frame();}};$('fov').oninput=()=>setFov(Number($('fov').value));$('full').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.querySelector('main').requestFullscreen();
+import { Color, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
 
-export function clearKeys(){keys.clear();}
+export function createRenderer(canvas, requireHardware = false) {
+  const renderer = new WebGLRenderer({canvas, failIfMajorPerformanceCaveat:requireHardware});
+  if (requireHardware) {
+    const gl = renderer.getContext();
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    const adapter = info && gl.getParameter(info.UNMASKED_RENDERER_WEBGL);
+    if (!adapter || /swiftshader|llvmpipe|softpipe|software rasterizer/i.test(adapter)) {
+      renderer.dispose();
+      renderer.forceContextLoss();
+      throw Error('服务器 Chromium 未检测到硬件 WebGL2，请检查 GPU 驱动');
+    }
+  }
+  const scene = new Scene();
+  scene.background = new Color(0x11151c);
+  const spark = new SparkRenderer({renderer});
+  scene.add(spark);
+  const camera = new PerspectiveCamera();
+  let model, closed = false;
+  return {
+    async load(path, progress) {
+      const mesh = new SplatMesh({
+        url:'/model/' + path.split('/').map(encodeURIComponent).join('/'), onProgress:progress
+      });
+      try {
+        await mesh.initialized;
+        if (closed) throw Error('视窗已关闭');
+        const box = mesh.getBoundingBox();
+        model = mesh;
+        scene.add(mesh);
+        return {min:box.min.toArray(), max:box.max.toArray(), count:mesh.numSplats};
+      } catch (error) { mesh.dispose(); throw error; }
+    },
+    draw(view) {
+      if (!model || closed) return;
+      if (renderer.getContext().isContextLost()) throw Error('WebGL 上下文已丢失，可关闭其他视窗后重试');
+      if (canvas.width !== view.width || canvas.height !== view.height) renderer.setSize(view.width, view.height, false);
+      camera.aspect = view.width / view.height;
+      camera.position.fromArray(view.position);
+      camera.quaternion.fromArray(view.quaternion);
+      camera.fov = view.fov;
+      camera.near = view.near;
+      camera.far = view.far;
+      camera.updateProjectionMatrix();
+      model.rotation.x = view.flipped ? Math.PI : 0;
+      renderer.render(scene, camera);
+    },
+    dispose() {
+      closed = true;
+      model?.dispose();
+      spark.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
+    }
+  };
+}

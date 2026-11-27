@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3DGS 模型视窗</title>
+<style>
+:root{color-scheme:dark;font:13px/1.4 system-ui,sans-serif;background:#11151c;color:#eee}
+*{box-sizing:border-box} body{margin:0;height:100dvh;display:flex;flex-direction:column}
+#controls{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:5px;background:#202733}
+button,input,select{font:inherit}button{cursor:pointer}input[type=range]{width:56px;vertical-align:middle}
+#surface{position:relative;flex:1;min-height:0}canvas{width:100%;height:100%;display:block;touch-action:none}
+#status{position:absolute;bottom:5px;left:6px;right:6px;pointer-events:none;overflow-wrap:anywhere;text-shadow:0 1px 3px #000}
+footer{padding:2px 6px;color:#bac5d4} [hidden]{display:none!important}
+</style></head><body>
+<div id="controls">
+<label>渲染 <select id="backend"><option value="local">本机 GPU</option><option value="server" disabled>服务器 GPU</option></select></label>
+<button id="reset">原点</button><button id="global">全局视角</button><button id="fps">第一人称</button>
+<button id="flip">翻转</button><button id="full">全屏</button>
+<label>FOV <input id="fov" type="range" min="20" max="120" value="90"><output id="angle">90°</output></label>
+<label>速度 <input id="speed" type="range" min=".1" max="20" step=".1" value="1"><output id="speedval">1.0</output></label>
+<button id="retry" hidden>重试</button></div>
+<div id="surface"><canvas tabindex="0" aria-label="模型视角"></canvas><span id="status"></span></div>
+<footer><span id="mode">第一人称</span> · XYZ <span id="pose">0, 0, 0</span> · WASD / Q / E</footer>
+<script type="module" src="/model-pane.js"></script></body></html>

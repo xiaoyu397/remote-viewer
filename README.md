@@ -17,7 +17,7 @@
 - **Text Preview** — 支持代码、配置文件、日志等 UTF-8 文本的只读预览。
 - **Markdown Preview** — 打开 `.md` 或 `.markdown` 文件后，勾选文件栏的 **渲染 Markdown** 查看 GitHub 风格的标题、表格、任务列表和代码高亮，取消勾选即可查看原文。支持 README 中的居中 HTML 标题、图片和内嵌视频，媒体相对路径按文档所在目录解析。
 - **File Explorer** — GitHub 风格的多级目录树与文件预览，支持系统浅色和深色主题。拖动目录栏右边框可调整宽度，聚焦边框后也可用方向键调整。浏览器会记住宽度。
-- **Client-side Rendering** — 三维场景由本地浏览器渲染，无需使用远程服务器 GPU 进行渲染。
+- **多模型预览** — 在同一页并排查看多个 3DGS 模型，每个视窗可独立控制相机并选择本机或服务器 GPU。
 
 ## Supported Formats
 
@@ -90,6 +90,20 @@ ssh -N -L 8080:127.0.0.1:8080 user@server
 随后打开 [http://localhost:8080](http://localhost:8080)。
 
 使用 VS Code Remote SSH 时，也可以在 **Ports** 面板转发服务器的 8080 端口，并在浏览器中打开。
+
+## 同时查看多个 3DGS 模型
+
+依次点击文件树中的 `.ply` 或其他支持的高斯模型，每个文件都会打开独立视窗。每个视窗有自己的相机和工具栏，点击标题或画面即可选中。切到其他文件再返回时会保留模型和视角。用标签上的 × 关闭视窗并释放资源。模型数量越多，显存需求越高。
+
+默认使用打开网页的设备渲染。在配有 GPU 的 Linux 服务器上，可安装支持硬件 WebGL2 的 Chromium 和相应的 EGL/OpenGL 驱动，以有 GPU 访问权限、可运行 Chromium 沙箱的普通用户启动服务：
+
+```bash
+npm install
+npm run build
+npm start -- --root /data --port 8080 --server-gpu
+```
+
+默认浏览器路径为 `/usr/bin/chromium`，其他位置可设置 `GPU_CHROMIUM`。在视窗的 **渲染** 菜单中选择 **服务器 GPU** 即可切换，后续新开的视窗沿用最近的选择。服务器读取模型，在服务器 GPU 上绘制后通过当前 HTTP 连接回传 JPEG 帧，支持沿用 SSH 端口转发。每个服务实例最多同时使用 4 个远程视窗，单窗帧率上限约 12 帧/秒，最长边 1600 像素。空闲约 90 秒后回收会话，恢复预览时会重新加载。实际流畅度取决于模型、服务器和网络延迟。
 
 ## Gaussian Splatting Controls
 
