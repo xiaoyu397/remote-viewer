@@ -33,9 +33,21 @@
 
 ## Quick Start
 
+### 服务器快速启动（预编译包）
+
+如果服务器已有 Node.js 22.4 或更高版本，下载预编译包即可启动。发布包包含网页和服务端的 npm 运行依赖。建议解压到独立的程序目录，将模型保存在单独的数据目录中。
+
+```bash
+curl -fL --retry 3 -o remote-viewer.tar.gz https://github.com/xiaoyu397/remote-viewer/releases/latest/download/remote-viewer.tar.gz
+tar -xzf remote-viewer.tar.gz
+node remote-viewer/server.mjs --root /data --port 8080
+```
+
+将 `/data` 替换为模型目录。也可以从 [GitHub Releases](https://github.com/xiaoyu397/remote-viewer/releases) 下载指定版本和 SHA-256 校验文件。服务器 GPU 渲染使用系统 Chromium 和 GPU 驱动；视频转码和检查点预览分别使用已有的 FFmpeg 和 Python/PyTorch 环境。
+
 ### Requirements
 
-- Node.js 22 或更高版本（推荐），以及 npm。
+- Node.js 22.4 或更高版本。仅从源码构建时需要 npm。
 - 支持 WebGL2 的现代浏览器，建议启用硬件加速。
 - FFmpeg（可选，用于兼容视频播放），需要包含 libx264 和 AAC 编码器。
 
@@ -49,7 +61,7 @@ CHECKPOINT_PYTHON=/path/to/venv/bin/python npm start -- --root /data
 
 点击 `.pt` 或 `.pth` 即可查看张量表。嵌套检查点使用完整路径显示模型权重、缓冲区和优化器张量。预览使用 `weights_only=True` 和 `FakeTensorMode`，浏览器仅接收元数据。每个文件最多列出前 10,000 个张量。包含自定义 Python 对象的检查点可能需要先导出模型的 `state_dict`。
 
-### Installation
+### 从源码构建
 
 ```bash
 git clone https://github.com/xiaoyu397/remote-viewer.git
@@ -172,12 +184,16 @@ remote-viewer/
 
 ## Updating
 
+**预编译包**：从 Releases 下载新版，解压到新目录。停止旧服务后，用相同的 `--root` 和端口启动新版本，模型无需移动。
+
+**源码安装**：依赖变更时先执行 `npm ci`，然后构建并重启。
+
 ```bash
 git pull
 npm run build
 ```
 
-构建完成后重启服务。如果依赖配置发生变化，再执行 `npm install`；否则可复用已有的 `node_modules`。
+
 
 ## Security & Limitations
 

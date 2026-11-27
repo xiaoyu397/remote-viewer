@@ -1,0 +1,53 @@
+name: Publish ready-to-run package
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: portable-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Build distribution
+        run: scripts/package-release.sh "$RUNNER_TEMP/assets"
+      - name: Test extracted distribution
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          mkdir smoke-data
+          echo ready > smoke-data/ready.txt
+          tar -xzf assets/remote-viewer.tar.gz
+          node remote-viewer/server.mjs --root smoke-data --port 18273 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          curl -fsS --retry 10 --retry-connrefused http://127.0.0.1:18273/ -o page.html
+          grep -q 'Remote Viewer' page.html
+          curl -fsS http://127.0.0.1:18273/api/list | grep -q 'ready.txt'
+          test "$(curl -fsS http://127.0.0.1:18273/model/ready.txt)" = ready
+          curl -fsS http://127.0.0.1:18273/model.html -o model.html
+          curl -fsS http://127.0.0.1:18273/pano.html -o pano.html
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="build-${GITHUB_SHA:0:12}"
+          assets="$RUNNER_TEMP/assets"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --draft \
+              --title "Remote Viewer · ${GITHUB_SHA:0:12}" \
+              --notes '下载 remote-viewer.tar.gz，解压后运行 node remote-viewer/server.mjs --root /data。需要 Node.js 22.4+，前端和 npm 运行依赖均已打包。'
+          fi
+          gh release upload "$tag" "$assets/remote-viewer.tar.gz" "$assets/remote-viewer.tar.gz.sha256" --clobber
+          gh release edit "$tag" --draft=false --latest
