@@ -77,14 +77,14 @@ function initPane(path) {
     el('status').textContent = '预览失败：' + error.message;
     el('retry').hidden=false;
   }
-  async function load() {
+  async function load({autoServer=false, notice=''} = {}) {
     dispose();
     const id=epoch;
     const nextCanvas=canvas.cloneNode(false);
     canvas.replaceWith(nextCanvas);
     canvas=nextCanvas;
     el('retry').hidden=true;
-    el('status').textContent='正在加载模型…';
+    el('status').textContent=notice || '正在加载模型…';
     try {
       if (el('backend').value === 'server') {
         stage=createRemoteRenderer(canvas, error => { if (id===epoch) fail(error); });
@@ -94,14 +94,21 @@ function initPane(path) {
         stage=createRenderer(canvas);
       }
       const info=await stage.load(path, e => {
-        if (id===epoch) el('status').textContent='正在加载 '+(e.total ? Math.round(100*e.loaded/e.total)+'%' : Math.round(e.loaded/1048576)+' MB');
+        if (id===epoch) el('status').textContent=notice+'正在加载 '+(e.total ? Math.round(100*e.loaded/e.total)+'%' : Math.round(e.loaded/1048576)+' MB');
       });
       if (id!==epoch) return;
       bounds=new Box3(new Vector3(...info.min),new Vector3(...info.max));
       ready=true;
-      el('status').textContent=info.count.toLocaleString()+' Gaussians';
+      el('status').textContent=notice+info.count.toLocaleString()+' Gaussians';
       wake();
-    } catch (error) { if (id===epoch) fail(error); }
+    } catch (error) {
+      if (id!==epoch) return;
+      if (autoServer && (error.status===503 || error.status===429)) {
+        el('backend').value='local';
+        return load({notice:'服务器 GPU 暂不可用，已切换到本机 · '});
+      }
+      fail(error);
+    }
   }
   function setFov(value) {
     camera.fov=Math.max(20,Math.min(120,value));
@@ -168,16 +175,26 @@ function initPane(path) {
       wake();
     }
   });
-  el('retry').onclick=load;
+  el('retry').onclick=()=>load();
   el('backend').onchange=() => {
     try { sessionStorage.setItem('model-backend',el('backend').value); } catch {}
     load();
   };
   tellParent('model-ready');
-  fetch('/api/gpu').then(r=>r.json()).then(({enabled})=>{
-    el('backend').options[1].disabled=!enabled;
-    if (enabled) {
-      try { if (sessionStorage.getItem('model-backend')==='server') el('backend').value='server'; } catch {}
-    }
-  }).catch(()=>{}).finally(load);
+  async function start() {
+    const initialEpoch=epoch;
+    const backend=el('backend');
+    let enabled=false, preferred;
+    try {
+      const response=await fetch('/api/gpu');
+      if (response.ok) enabled=(await response.json()).enabled===true;
+    } catch {}
+    if (initialEpoch!==epoch) return;
+    try { preferred=sessionStorage.getItem('model-backend'); } catch {}
+    backend.querySelector('[value="server"]').disabled=!enabled;
+    backend.value=enabled && preferred!=='local' ? 'server' : 'local';
+    backend.disabled=false;
+    await load({autoServer:backend.value==='server' && preferred!=='server'});
+  }
+  start();
 }

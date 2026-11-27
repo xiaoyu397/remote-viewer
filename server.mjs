@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
-const {values:o}=parseArgs({options:{'server-gpu':{type:'boolean',default:false},root:{type:'string',default:'.'},port:{type:'string',default:'8080'},host:{type:'string',default:'127.0.0.1'}}});
+const {values:o}=parseArgs({allowNegative:true,options:{'server-gpu':{type:'boolean',default:true},root:{type:'string',default:'.'},port:{type:'string',default:'8080'},host:{type:'string',default:'127.0.0.1'}}});
 const root=await fs.realpath(o.root), base=path.dirname(fileURLToPath(import.meta.url));
 const allowed=p=>p===root||p.startsWith(root.endsWith(path.sep)?root:root+path.sep);
 async function resolve(p){if(typeof p!=='string')throw Error('Invalid path');const target=await fs.realpath(path.resolve(root,p));if(!allowed(target))throw Error('Outside model directory');return target;}
