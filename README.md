@@ -15,8 +15,8 @@
 - **360° Panorama** — 支持等距柱状投影全景图，可在普通图片与全景模式之间切换。
 - **Media Preview** — 支持图片、视频、音频在线预览；视频提供 FFmpeg 兼容转码及缓存。
 - **Text Preview** — 支持代码、配置文件、日志等 UTF-8 文本的只读预览。
-- **Markdown Preview** — 打开 `.md` 或 `.markdown` 文件后，勾选文件栏的 **渲染 Markdown** 查看排版，取消勾选即可查看原文。
-- **File Explorer** — VS Code 风格的多级目录树、标签页、文件筛选、刷新、折叠及下载。
+- **Markdown Preview** — 打开 `.md` 或 `.markdown` 文件后，勾选文件栏的 **渲染 Markdown** 查看 GitHub 风格的标题、表格、任务列表和代码高亮，取消勾选即可查看原文。
+- **File Explorer** — GitHub 风格的多级目录树与文件预览，支持系统浅色和深色主题。拖动目录栏右边框可调整宽度，聚焦边框后也可用方向键调整。浏览器会记住宽度。
 - **Client-side Rendering** — 三维场景由本地浏览器渲染，无需使用远程服务器 GPU 进行渲染。
 
 ## Supported Formats

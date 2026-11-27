@@ -1,0 +1,98 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff; --subtle: #f6f8fa; --fg: #1f2328; --muted: #59636e;
+  --border: #d1d9e0; --hover: #eff2f5; --accent: #0969da; --selected: #ddf4ff;
+  --active-tab: #fd8c73; --sidebar-width: 288px;
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --subtle: #151b23; --fg: #f0f6fc; --muted: #9198a1;
+    --border: #3d444d; --hover: #212830; --accent: #4493f8; --selected: #142a43;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { font-size: 14px; margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg); }
+button, input { font: inherit; color: inherit; }
+button {
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--subtle);
+  font-weight: 500; cursor: pointer;
+}
+button:hover { background: var(--hover); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.icon, #files button[title]::before, #files button[aria-expanded]::after, #preview:not(:has(*))::before {
+  display: inline-block; width: 16px; height: 16px; flex: none; background: currentColor;
+  mask: var(--glyph) center / contain no-repeat;
+}
+.repo-icon { --glyph: url('@primer/octicons/build/svg/repo-16.svg'); }
+.file-icon { --glyph: url('@primer/octicons/build/svg/file-16.svg'); }
+.sidebar-icon { --glyph: url('@primer/octicons/build/svg/sidebar-collapse-16.svg'); }
+.refresh-icon { --glyph: url('@primer/octicons/build/svg/sync-16.svg'); }
+.collapse-icon { --glyph: url('@primer/octicons/build/svg/fold-16.svg'); }
+.search-icon { --glyph: url('@primer/octicons/build/svg/search-16.svg'); }
+.icon-button { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; flex: none; }
+.app-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--subtle); border-bottom: 1px solid var(--border); }
+.app-header strong { font-size: 16px; }
+.app-header .repo-icon { margin-left: 4px; color: var(--muted); }
+#workspace { flex: 1; min-height: 0; display: flex; }
+#sidebar { width: var(--sidebar-width); flex: none; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-heading { display: flex; align-items: center; gap: 2px; padding: 12px 10px 8px 16px; }
+.sidebar-heading h2 { margin: 0 auto 0 0; font-size: 16px; }
+.sidebar-heading button { background: transparent; border-color: transparent; color: var(--muted); }
+.sidebar-heading button:hover { background: var(--hover); }
+.filter { display: flex; align-items: center; gap: 6px; margin: 0 10px 10px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); }
+.filter:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
+#search { width: 100%; min-width: 0; outline: none; border: 0; background: transparent; color: var(--fg); }
+#files { flex: 1; overflow: auto; padding: 0 6px 12px; color: var(--muted); }
+#files button { display: block; width: 100%; padding-block: 5px; border: 0; background: transparent; color: var(--fg); font-weight: 400; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#files button:hover { background: var(--hover); }
+#files button.selected { background: var(--selected); box-shadow: inset 3px 0 var(--accent); }
+#files button[title]::before { content: ''; vertical-align: -3px; margin: 0 8px 0 14px; color: var(--muted); --glyph: url('@primer/octicons/build/svg/file-16.svg'); }
+#files button[aria-expanded] { position: relative; }
+#files button[aria-expanded]::before { --glyph: url('@primer/octicons/build/svg/file-directory-fill-16.svg'); color: var(--accent); }
+#files button[aria-expanded]::after { content: ''; position: absolute; top: 50%; left: var(--indent); width: 12px; height: 12px; transform: translateY(-50%); color: var(--muted); --glyph: url('@primer/octicons/build/svg/chevron-right-16.svg'); }
+#files button[aria-expanded=true]::after { transform: translateY(-50%) rotate(90deg); }
+#splitter { position: relative; width: 1px; flex: none; background: var(--border); cursor: col-resize; touch-action: none; z-index: 3; }
+#splitter::after { content: ''; position: absolute; inset: 0 -5px; }
+#splitter:hover, #splitter:focus-visible, .resizing #splitter { background: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.resizing, .resizing * { cursor: col-resize !important; user-select: none; }
+.resizing iframe { pointer-events: none; }
+main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px clamp(8px, 2vw, 28px) 0; background: var(--bg); }
+#tabs { display: flex; overflow: auto; flex: none; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+#tabs:empty { display: none; }
+#tabs button { white-space: nowrap; background: transparent; border: 0; border-radius: 0; padding: 7px 10px; border-bottom: 2px solid transparent; }
+#tabs button.active { border-bottom-color: var(--active-tab); font-weight: 600; }
+#tabs button:hover { background: var(--hover); }
+.viewer-frame { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; }
+#filebar, #gsbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 12px; background: var(--subtle); border-bottom: 1px solid var(--border); }
+#filebar .icon { color: var(--muted); }
+#filename { flex: 1 1 70px; min-width: 35px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#markdown-control { display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; }
+input { accent-color: var(--accent); }
+input[type=range] { width: 90px; vertical-align: middle; }
+#preview, #view { flex: 1; min-height: 0; min-width: 0; position: relative; }
+#view { background: #11151c; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#preview { overflow: auto; display: flex; align-items: center; justify-content: center; }
+#preview:not(:has(*)) { flex-direction: column; gap: 10px; color: var(--muted); }
+#preview:not(:has(*)):not(:empty)::before { content: ''; width: 32px; height: 32px; --glyph: url('@primer/octicons/build/svg/file-24.svg'); }
+#preview > :is(img, video), #preview video { max-width: 100%; max-height: 100%; object-fit: contain; }
+#preview > pre { align-self: stretch; width: 100%; margin: 0; padding: 16px; overflow: auto; font: 13px/1.65 ui-monospace, monospace; tab-size: 4; }
+#preview iframe { border: 0; width: 100%; height: 100%; }
+#posebar, #status { padding: 6px 8px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+#posebar { border-top: 1px solid var(--border); }
+@media (max-width: 600px) {
+  .app-header { padding: 6px 10px; }
+  main { padding: 6px 4px 0; }
+  .sidebar-heading { padding: 6px; }
+  .sidebar-heading .icon-button { width: 26px; }
+  #filebar { gap: 5px; padding: 6px; }
+  #filename { flex-basis: calc(100% - 24px); }
+}
+
+#files button[title] { padding-left: var(--indent); }
+#files button[data-kind=image]::before { --glyph: url('@primer/octicons/build/svg/image-16.svg'); }
+#files button[data-kind=model]::before { --glyph: url('@primer/octicons/build/svg/package-16.svg'); }
+#files button[data-kind=video]::before { --glyph: url('@primer/octicons/build/svg/video-16.svg'); }
+#toggle-files[aria-expanded=false] .sidebar-icon { --glyph: url('@primer/octicons/build/svg/sidebar-expand-16.svg'); }

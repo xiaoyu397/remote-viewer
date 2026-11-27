@@ -1,7 +1,16 @@
 import MarkdownIt from 'markdown-it';
+import taskLists from 'markdown-it-task-lists';
+import hljs from 'highlight.js/lib/common';
 import './markdown.css';
 
-const parser = new MarkdownIt({ html: false });
+const parser = new MarkdownIt({
+  html: false,
+  linkify: true,
+  highlight(code, language) {
+    if (code.length > 32768 || !language || !hljs.getLanguage(language)) return '';
+    return hljs.highlight(code, { language, ignoreIllegals: true }).value;
+  }
+}).use(taskLists);
 
 // Resolve local references within the browsed file tree, including paths starting with /.
 function resourceUrl(reference, fileUrl) {
@@ -13,7 +22,7 @@ function resourceUrl(reference, fileUrl) {
 
 export function renderMarkdown(source, fileUrl) {
   const article = document.createElement('article');
-  article.className = 'markdown-document';
+  article.className = 'markdown-body';
   const template = document.createElement('template');
   template.innerHTML = parser.render(source);
 

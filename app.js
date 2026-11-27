@@ -1,5 +1,6 @@
 import { createFileTree } from './file-tree.js';
-import { renderMarkdown } from './markdown.js';
+import { setupSidebar } from './sidebar.js';
+setupSidebar();
 const $=id=>document.getElementById(id), status=s=>$('status').textContent=s;
 const gs=/\.(ply|splat|ksplat|spz|sog)$/i, img=/\.(jpg|jpeg|jfif|png|webp|bmp|gif|avif|ico|tiff?|heic|heif)$/i, video=/\.(mp4|webm|ogv|mov|m4v|mkv|avi)$/i, audio=/\.(mp3|wav|ogg|flac|m4a)$/i, text=/\.(txt|json|jsonl|csv|tsv|log|py|js|ts|jsx|tsx|html|css|xml|yaml|yml|toml|ini|cfg|conf|sh|bash|cpp|c|h|hpp|rs|go|java|sql|obj|mtl|ipynb)$/i;
 const markdown=/\.(?:md|markdown)$/i;
@@ -7,10 +8,10 @@ const url=e=>'/model/'+e.path.split('/').map(encodeURIComponent).join('/');
 let tabs=[], active=null, generation=0, gsModule, gsQueue=Promise.resolve();
 const selectFile = createFileTree({
   root: $('files'), search: $('search'), refresh: $('refresh'), collapse: $('collapse'),
-  openFile: open, fileIcon: name => gs.test(name) ? '◇' : img.test(name) ? '▧' : video.test(name) ? '▶' : '▤'
+  openFile: open, fileIcon: name => gs.test(name) ? 'model' : img.test(name) ? 'image' : video.test(name) ? 'video' : 'file'
 });
 function drawTabs(){$('tabs').replaceChildren();for(const e of tabs){const b=document.createElement('button');b.className=active?.path===e.path?'active':'';b.textContent=e.name+'  ';b.onclick=()=>open(e);const x=document.createElement('span');x.textContent='×';x.title='关闭';x.style.padding='4px';x.onclick=ev=>{ev.stopPropagation();tabs=tabs.filter(t=>t.path!==e.path);if(active?.path===e.path){if(tabs.length)open(tabs.at(-1));else reset();}drawTabs();};b.append(x);$('tabs').append(b);}}
-function reset(){generation++;active=null;hideMarkdownControl();gsModule?.clearKeys();$('gsbar').hidden=$('view').hidden=$('posebar').hidden=true;$('preview').hidden=false;$('preview').textContent='从左侧目录选择文件';$('filename').textContent='请选择文件';$('pano').hidden=$('download').hidden=true;status('就绪');selectFile(null);}
+function reset(){generation++;active=null;hideMarkdownControl();gsModule?.clearKeys();$('gsbar').hidden=$('view').hidden=$('posebar').hidden=true;$('preview').hidden=false;$('preview').textContent='从左侧目录选择文件';$('filename').textContent='文件预览';$('pano').hidden=$('download').hidden=true;status('就绪');selectFile(null);}
 async function open(e,pano=false){const id=++generation;hideMarkdownControl();active=e;if(!tabs.some(t=>t.path===e.path))tabs.push(e);drawTabs();selectFile(e.path);gsModule?.clearKeys();$('filename').textContent=e.path;$('download').hidden=false;$('pano').hidden=!img.test(e.name);$('pano').textContent=pano?'普通图片':'360° 全景';$('pano').onclick=()=>open(e,!pano);$('download').onclick=()=>{const a=document.createElement('a');a.href=url(e);a.download=e.name;a.click();};const isGS=gs.test(e.name);$('gsbar').hidden=$('view').hidden=$('posebar').hidden=!isGS;const p=$('preview');p.hidden=isGS;p.replaceChildren();status(e.name);
 try{
   const isText = markdown.test(e.name) || text.test(e.name) || !e.name.includes('.');
@@ -50,15 +51,25 @@ function showText(file, preview, source) {
   const toggle = $('markdown-render');
   const notice = file.size > 2097152 ? '[仅预览前 2 MiB，请下载查看完整文件]' : '';
 
-  function drawText() {
+  const id = generation;
+  async function drawText() {
     if (canRender && toggle.checked) {
-      const article = renderMarkdown(source, url(file));
-      if (notice) {
-        const footer = document.createElement('p');
-        footer.textContent = notice;
-        article.append(footer);
+      try {
+        const { renderMarkdown } = await import('./markdown.js');
+        if (id !== generation || !toggle.checked) return;
+        const article = renderMarkdown(source, url(file));
+        if (notice) {
+          const footer = document.createElement('p');
+          footer.textContent = notice;
+          article.append(footer);
+        }
+        preview.replaceChildren(article);
+      } catch (error) {
+        if (id !== generation || !toggle.checked) return;
+        toggle.checked = false;
+        drawText();
+        status('Markdown 渲染失败：' + error.message);
       }
-      preview.replaceChildren(article);
     } else {
       const pre = document.createElement('pre');
       pre.textContent = source + (notice ? '\n\n' + notice : '');

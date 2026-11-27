@@ -58,11 +58,12 @@ export function createFileTree({ root, search, refresh, collapse, openFile, file
       while (count < Math.min(limit, rows.length)) {
         const entry = rows[count++];
         const row = document.createElement('button');
-        row.style.paddingLeft = (10 + depth * 16) + 'px';
+        row.style.setProperty('--indent', (4 + depth * 16) + 'px');
         row.title = entry.path;
         fragment.append(row);
         if (!entry.directory) {
-          row.textContent = fileIcon(entry.name) + ' ' + entry.name;
+          row.dataset.kind = fileIcon(entry.name);
+          row.textContent = entry.name;
           if (entry.path === selected) {
             row.classList.add('selected');
             selectedRow = row;
@@ -73,9 +74,9 @@ export function createFileTree({ root, search, refresh, collapse, openFile, file
 
         const children = document.createElement('div');
         fragment.append(children);
+        row.textContent = entry.name;
         function setExpanded(isOpen) {
           row.setAttribute('aria-expanded', String(isOpen));
-          row.textContent = (isOpen ? '⌄ 📂 ' : '› 📁 ') + entry.name;
           children.hidden = !isOpen;
         }
         setExpanded(expanded.has(entry.path));
